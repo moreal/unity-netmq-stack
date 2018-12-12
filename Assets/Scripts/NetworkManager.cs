@@ -8,62 +8,68 @@ using UnityEngine;
 
 public class NetworkManager : MonoBehaviour {
 
-	void StartServer()
+	class NetworkTest
 	{
-		Debug.Log("Start Server!");
-		using (PullSocket pullSocket = new PullSocket())
-		using (PublisherSocket publisherSocket = new PublisherSocket())
+		void StartServer()
 		{
-			pullSocket.Bind("tcp://*:20002");
-			publisherSocket.Bind("tcp://*:20001");
-			
-			while (true)
+			Debug.Log("Start Server!");
+			using (PullSocket pullSocket = new PullSocket())
+			using (PublisherSocket publisherSocket = new PublisherSocket())
 			{
-				string str = pullSocket.ReceiveFrameString();
-				Debug.Log("[Server] Get! :: " + str);
-				publisherSocket.SendFrame("Hello Client!");
-				Debug.Log("[Server] Send Hello Client!");
+				pullSocket.Bind("tcp://*:20002");
+				publisherSocket.Bind("tcp://*:20001");
+
+				while (true)
+				{
+					string str = pullSocket.ReceiveFrameString();
+					Debug.Log("[Server] Get! :: " + str);
+					publisherSocket.SendFrame("Hello Client!");
+					Debug.Log("[Server] Send Hello Client!");
+				}
 			}
 		}
-		Debug.Log("Close Server!");
-	}
 
-	void StartClient()
-	{
-		Debug.Log("Client is On!!");
-		using (var pushSocket = new PushSocket())
-		using (var subscriberSocket = new SubscriberSocket())
+		void StartClient()
 		{
-			pushSocket.Connect("tcp://localhost:20002");
-			subscriberSocket.Connect("tcp://localhost:20001");
-			subscriberSocket.Subscribe("topicA");
-			
-			Thread.Sleep(TimeSpan.FromSeconds(2));
-			
-			Debug.Log("Send !!");
-			pushSocket.SendFrame("Hello Server First!");
-			while (true)
+			Debug.Log("Client is On!!");
+			using (var pushSocket = new PushSocket())
+			using (var subscriberSocket = new SubscriberSocket())
 			{
-				string str = subscriberSocket.ReceiveFrameString();
-				Debug.Log("[Client] Get! :: " + str);
-				pushSocket.SendFrame("Hello Server!");
-				Debug.Log("[Client] Send Hello Server!");
-				
-//				Thread.Sleep(TimeSpan.FromSeconds(1));
+				pushSocket.Connect("tcp://localhost:20002");
+				subscriberSocket.Connect("tcp://localhost:20001");
+				subscriberSocket.Subscribe("topicA");
+
+				Thread.Sleep(TimeSpan.FromSeconds(2));
+
+				Debug.Log("Send !!");
+				pushSocket.SendFrame("Hello Server First!");
+				while (true)
+				{
+					string str = subscriberSocket.ReceiveFrameString();
+					Debug.Log("[Client] Get! :: " + str);
+					pushSocket.SendFrame("Hello Server!");
+					Debug.Log("[Client] Send Hello Server!");
+				}
+
 			}
-			
+		}
+
+		public void Start()
+		{
+			new Thread(StartServer).Start();
+			Thread.Sleep(TimeSpan.FromSeconds(3));
+			new Thread(StartClient).Start();
 		}
 	}
-	
-	// Use this for initialization
-	void Start () {
-		new Thread(StartServer).Start();
-		Thread.Sleep(TimeSpan.FromSeconds(3));
-		new Thread(StartClient).Start();
 
-//		thread.Starat();
+	void Start()
+	{
+		var test = new NetworkTest();
+		test.Start();
+
 	}
 	
+
 	// Update is called once per frame
 	void Update () {
 		
